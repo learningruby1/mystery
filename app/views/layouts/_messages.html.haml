@@ -1,0 +1,7 @@
+- flash.each do |name, message|
+  - next if name == 'scroll'
+  %div{ :class => "alert alert-#{ name == 'notice' ? 'success' : 'danger' }" }
+    .container
+      %button.close{ 'aria-hidden' => 'true', 'data-dismiss' => 'alert', :type => 'button' } &times;
+      = message.split('<spain/>').first
+      %span.spain= message.split('<spain/>').last if message.split('<spain/>').length > 1

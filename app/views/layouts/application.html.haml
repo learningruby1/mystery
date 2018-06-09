@@ -1,0 +1,26 @@
+!!! HTML
+%html{ :lang => 'en' }
+  %head
+    %title Forms Mama
+    %meta{ 'http-equiv' => 'Content-Type', :content => 'text/html; charset=utf-8' }
+    %meta{ 'http-equiv' => 'X-UA-Compatible', :content => "IE=EDGE" }
+    %meta{ :name => 'viewport', :content => 'width=device-width, initial-scale=1.0' }
+
+    = stylesheet_link_tag 'application', :media => 'all'
+    = javascript_include_tag 'application'
+    = csrf_meta_tag
+
+    = yield :head
+
+  %body.new_roman
+
+    = render :partial => 'layouts/navigation'
+
+    = render :partial => 'layouts/messages'
+
+    = yield
+
+    // [andpu] it is singleton for all bootstrap modal windows
+    #modal_window.modal.fade{ :role => 'dialog', 'aria-labelledby' => 'remoteModalLabel', 'aria-hidden' => 'true', :tabindex => '-1' }
+      .modal-dialog
+        .modal-content

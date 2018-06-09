@@ -1,0 +1,33 @@
+.margin-left{
+  margin-left: -15px;
+  margin-right: -13px;
+}
+.spain{
+  color: #009933;
+}
+.answer{
+  color: #4D8ACD;
+}
+.padding-left{
+  padding-left: -15px;
+}
+.margin-vertical-15{
+  margin-top: 15px;
+  margin-bottom: -15px;
+}
+.mandatory-box{
+  padding: 1px 5px 1px 5px;
+  border-radius: 2px;
+}
+.marin-top-50{
+  margin-top: 50px;
+}
+.example{
+  font-size: 12px;
+}
+.move_to_left_20{
+  margin-left: 20px;
+}
+.move_to_up{
+  margin-top: -54px;
+}

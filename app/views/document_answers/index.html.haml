@@ -1,0 +1,123 @@
+.container
+  %h5 REVIEW YOUR ANSWERS AND EDIT IF NECESSARY
+  %h5.spain REVISE SUS RESPUESTAS Y HAY CUALQUIER CAMBIO QUE SEA NECESARIO
+  %hr
+  - field_type_to_show = /review_show|checkbox|time/
+
+  / Step 25 for DC income math
+  - mom_income, dad_income = nil, nil
+  - @document.template.steps.each do |step|
+    %div{ :id => "scroll_#{step.step_number}" }
+    - session[:review] = nil
+    - next if @document.cant_render?(step) || (step.document_answers.blank? && Rails.env != 'development')
+
+    .row
+      .col-md-10
+        - unless step.to_s(@document).nil?
+          %strong.new_roman= step.to_s(@document).split('<spain/>')[0].html_safe
+          %strong.new_roman.spain= step.to_s(@document).split('<spain/>')[1].html_safe
+
+      .col-md-2
+        = link_to document_answer_path(@document, step.step_number, :review => true), :class => 'btn btn-default' do
+          %span.new_roman Change /
+          %span.new_roman.spain Cambiar
+
+    .row
+      .col-md-12
+        %table{ :style => 'width: 80%; margin-left: 20px' }
+
+          - last_toggle = nil
+          - toggler_answer = nil
+          - amount_index = 0
+          - shown_answers = 0
+
+          - answers = DocumentAnswer.sort(@document.answers.where(:template_step_id => step.id).to_a, step)
+          - answers.each do |answer|
+            - next if !answer.nil? && answer.field_type.match(/button/) || answer.answer.nil? && !answer.field_type.match(field_type_to_show)
+
+            / hr for amount
+            - if answer.template_field.id == DocumentAnswer.sort(@document.answers.where(:template_step_id => step.id).to_a, step).first.template_field.id && answer.id != @document.answers.where(:template_step_id => step.id).order(:id).first.id
+              %div
+                %hr
+
+            / Skip if answer not mentioned to show
+            - next if answer.answer.nil? && !answer.field_type.match(field_type_to_show)
+            / Toggler
+            - if answer.template_field.toggle_id.present?
+              - if last_toggle != answer.template_field.toggle_id
+                - last_toggle = answer.template_field.toggle_id
+                - toggler_answer = answer
+
+              - if last_toggle == answer.template_field.toggle_id
+                / Toggler check
+                - if toggler_answer.answer.nil? ||
+                  - answer.template_field.toggle_option.present? &&
+                  - !toggler_answer.answer.match(answer.template_field.toggle_option) ||
+                  - toggler_answer.answer == '0' &&
+                  - !toggler_answer.field_type.match(/review_show/)
+
+                  / Show NO if no other answers
+                  - if answer == answers.last && shown_answers == 0
+                    %span.answer No
+                  - next
+            - else last_toggle = nil
+
+            / Insert fullfiling
+            - if answer.template_field.name.present? && answer.template_field.name.match(/<insert>/) && answer.field_type.match(/text/)
+              - next if @document.looped_amount(step, answer.template_step.document_answers.where(:document_id => @document.id)) != @document.loop_amount(step) && !answer.template_step.amount_field_id.present? || @document.looped_amount(answer.step_number, answers) == 1
+              - amount_index += 1
+            - answer_html_array = answer.to_html_array(amount_index)
+
+            - if answer.template_field.field_type.match(/rev_inline/)
+              %span &nbsp
+            - else
+              %div
+
+            / Income math
+            - if @document.to_s == Document::DIVORCE_COMPLAINT && answer.step_number == 24
+              - if mom_income.nil?
+                - mom_income = answer.answer.to_f
+                - next
+              - else
+                - dad_income = answer.answer.to_f
+            - if !dad_income.nil?
+              - percentage = get_percentage_for_children(get_number_of_joint_child(@document)) / 100.0
+              %span.answer= "#{ dad_income > mom_income ? 'Dad' : 'Mom' } has to pay #{ (mom_income * percentage - dad_income * percentage).abs.round(2) }$ per month for child support to #{ dad_income > mom_income ? 'mom' : 'dad' }."
+              %span.spain= " / #{ (mom_income * percentage - dad_income * percentage).abs.round(2) }$ es la responsabilidad de manutención de menor que #{ dad_income > mom_income ? 'Papá' : 'Mamá' } tendrá que pagar a la #{ dad_income > mom_income ? 'mamá' : 'papá' } por mes."
+              / After it
+              - mom_income, dad_income = nil, nil
+            - else
+              / Html printing
+              - if answer.template_field.field_type.match(field_type_to_show) && answer.template_field.insert_place.nil? && (!answer.template_field.field_type.match(/review_yes_only/) || answer.answer == '1')
+                - shown_answers += 1
+                / 38 step need change until we have this one:
+                - if answer.answer == '0'
+                  %span.answer No
+                - else
+                  %span.answer= answer_html_array[0].split('<spain/>')[0].try :html_safe
+                  %span.spain= answer_html_array[0].split('<spain/>')[1].try :html_safe
+                  &nbsp
+
+              - if !answer.template_field.field_type.match(/checkbox/)
+                - shown_answers += 1
+                %span.answer= answer.to_spain(amount_index).try :html_safe
+
+              - if answer.template_field.field_type.match(/rev_br/)
+                %br
+                %br
+    .row
+      %br
+      %hr
+
+  .row
+    .col-md-6
+      = link_to generate_pdf_path(@document.id), :class => 'btn btn-default navbar-right' do
+        Continue
+        %span.spain / Continuar
+    %br
+    %br
+
+:javascript
+  if($("#scroll_#{params[:scroll]}").length > 0){
+    $(window).scrollTop( $("#scroll_#{params[:scroll]}").position().top - 20 );
+  }
